@@ -27,17 +27,12 @@ app.secret_key = os.environ.get(
 # ---------------- FIREBASE ----------------
 import json
 
-if not firebase_admin._apps:
+firebase_env = os.getenv("FIREBASE_CONFIG")
 
-    with open("serviceAccountKey.json", "r") as f:
-        firebase_config = json.load(f)
+if not firebase_env:
+    raise Exception("FIREBASE_CONFIG is missing in environment variables")
 
-    cred = credentials.Certificate(firebase_config)
-
-    firebase_admin.initialize_app(cred, {
-        "databaseURL": firebase_config.get("databaseURL")
-    })
-
+firebase_config = json.loads(firebase_env)
 # ---------------- QUESTIONS ----------------
 QUESTIONS = [
     "Little interest or pleasure in doing things?",
