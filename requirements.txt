@@ -5,3 +5,4 @@ gunicorn
 openai
 requests
 google-generativeai
+python-3.11.9
