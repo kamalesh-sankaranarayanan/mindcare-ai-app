@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="interactive-section">
+
+    <h1>🎯 Stress Relief Game</h1>
+
+    <p>
+        Click the moving box quickly and improve your focus.
+    </p>
+
+    <div id="focusBox"></div>
+
+    <h2 id="scoreText">
+        Score: 0
+    </h2>
+
+</div>
+
+<script>
+
+let box = document.getElementById("focusBox");
+
+let score = 0;
+
+function moveBox(){
+
+    let x = Math.random() * 600;
+
+    let y = Math.random() * 300;
+
+    box.style.left = x + "px";
+
+    box.style.top = y + "px";
+}
+
+moveBox();
+
+box.onclick = () => {
+
+    score++;
+
+    document.getElementById("scoreText").innerHTML =
+        "Score: " + score;
+
+    moveBox();
+};
+
+</script>
+
+{% endblock %}

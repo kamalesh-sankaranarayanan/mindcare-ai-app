@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="card">
+
+    <h1>Relaxation Hub</h1>
+
+    <p class="sub">
+        Activities shown for your current level:
+        <b>{{ level }}</b>
+    </p>
+
+    {% if level == "High" %}
+    <p class="danger">
+        These activities are supportive only.
+        Please contact a trusted person or professional if distress is high.
+    </p>
+    {% endif %}
+
+    <div class="activity-grid">
+
+        {% for item in activities %}
+
+        <div class="activity-card interactive-card">
+
+            <div class="activity-icon">
+                {{ item.icon }}
+            </div>
+
+            <h2>
+                {{ item.title }}
+            </h2>
+
+            <p>
+                {{ item.desc }}
+            </p>
+
+            <a href="{{ item.url }}">
+
+                <button>
+                    Start
+                </button>
+
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="interactive-section">
+
+    <h1>😂 Funny Video Therapy</h1>
+
+    <p>
+        Take a short happy break.
+    </p>
+
+    <video width="700" controls autoplay>
+
+        <source
+            src="/static/videos/cat.mp4"
+            type="video/mp4"
+        >
+
+    </video>
+    <video width="700" controls autoplay>
+
+        <source
+            src="/static/videos/dog.mp4"
+            type="video/mp4"
+        >
+
+    </video>
+    <video width="700" controls autoplay>
+
+        <source
+            src="/static/videos/cute.mp4"
+            type="video/mp4"
+        >
+
+    </video>
+
+</div>
+
+{% endblock %}

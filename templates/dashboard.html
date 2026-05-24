@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>🔥 Streak: {{ streak }}</h2>
+    <h2>⭐ XP: {{ xp }}</h2>
+</div>
+
+<section class="card">
+    <h1>{{ name }}'s Dashboard</h1>
+
+    {% if history %}
+        <canvas id="scoreChart"></canvas>
+
+        <h2>Assessment History</h2>
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Score</th>
+                <th>Level</th>
+            </tr>
+            {% for item in history %}
+            <tr>
+                <td>{{ item.date }}</td>
+                <td>{{ item.score }}</td>
+                <td>{{ item.level }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No assessment history found.</p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h1>Mood Journal</h1>
+    <select id="mood">
+        <option value="Happy">Happy</option>
+        <option value="Calm">Calm</option>
+        <option value="Sad">Sad</option>
+        <option value="Stressed">Stressed</option>
+        <option value="Anxious">Anxious</option>
+    </select>
+    <textarea id="moodNote" placeholder="Write a short note about your mood..."></textarea>
+    <button onclick="saveMood()">Save Mood</button>
+    <p id="moodStatus"></p>
+</section>
+
+<script>
+const historyData = {{ history | tojson }};
+if (historyData.length > 0) {
+    new Chart(document.getElementById("scoreChart"), {
+        type: "line",
+        data: {
+            labels: historyData.map(x => x.date),
+            datasets: [{
+                label: "Screening Score",
+                data: historyData.map(x => x.score),
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, max: 48 }
+            }
+        }
+    });
+}
+</script>
+<script src="{{ url_for('static', filename='js/mood.js') }}"></script>
+{% endblock %}

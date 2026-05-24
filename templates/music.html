@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="interactive-section">
+
+    <h1>🎵 Music Therapy</h1>
+
+    <p>
+        Relax your mind with calming music.
+    </p>
+
+    <audio controls loop>
+
+        <source
+            src="/static/audio/relax.mp3"
+            type="audio/mp3"
+        >
+
+    </audio>
+
+    <br><br>
+
+    <video width="700" controls autoplay loop>
+
+        <source
+            src="/static/videos/rain.mp4"
+            type="video/mp4"
+        >
+
+    </video>
+
+</div>
+
+{% endblock %}

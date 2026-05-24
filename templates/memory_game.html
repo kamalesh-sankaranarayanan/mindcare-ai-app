@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="interactive-section">
+
+    <h1>🎮 Memory Match Game</h1>
+
+    <p>
+        Match all cards to win.
+    </p>
+
+    <div class="memory-grid">
+
+        <div class="memory-card">🍎</div>
+        <div class="memory-card">🍌</div>
+        <div class="memory-card">🍎</div>
+        <div class="memory-card">🍌</div>
+
+        <div class="memory-card">⚽</div>
+        <div class="memory-card">🎮</div>
+        <div class="memory-card">⚽</div>
+        <div class="memory-card">🎮</div>
+
+    </div>
+
+    <h2 id="winText"></h2>
+
+</div>
+
+<script>
+
+let cards = document.querySelectorAll(".memory-card");
+
+let firstCard = null;
+let secondCard = null;
+
+let lockBoard = false;
+
+let matched = 0;
+
+cards.forEach(card => {
+
+    card.innerHTML = "?";
+
+    card.dataset.value = card.getAttribute("data-value")
+        || card.textContent;
+
+});
+
+cards.forEach(card => {
+
+    let actual = card.textContent;
+
+    card.dataset.value = actual;
+
+    card.innerHTML = "?";
+
+    card.onclick = () => {
+
+        if(lockBoard) return;
+
+        if(card === firstCard) return;
+
+        card.innerHTML = card.dataset.value;
+
+        if(!firstCard){
+
+            firstCard = card;
+            return;
+        }
+
+        secondCard = card;
+
+        lockBoard = true;
+
+        if(firstCard.dataset.value === secondCard.dataset.value){
+
+            matched++;
+
+            firstCard.style.background = "#22c55e";
+            secondCard.style.background = "#22c55e";
+
+            resetTurn();
+
+            if(matched === 4){
+
+                document.getElementById("winText")
+                    .innerHTML = "🎉 You Won!";
+            }
+
+        } else {
+
+            setTimeout(() => {
+
+                firstCard.innerHTML = "?";
+                secondCard.innerHTML = "?";
+
+                resetTurn();
+
+            }, 1000);
+        }
+    };
+});
+
+function resetTurn(){
+
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+}
+
+</script>
+
+{% endblock %}

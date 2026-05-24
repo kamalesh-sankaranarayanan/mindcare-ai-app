@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-card">
+    <h1>Create Account</h1>
+    <p class="sub">Register to save your assessment history.</p>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Age</label>
+        <input type="number" name="age" required>
+
+        <label>User Category</label>
+        <select name="category" required>
+            <option value="teen">Teen (13-17)</option>
+            <option value="college">College Student</option>
+            <option value="adult">Adult</option>
+        </select>
+        <label>Do you have any medical or mental health history?</label>
+
+        <textarea
+            name="health_background"
+            placeholder="Optional"
+        ></textarea>
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already registered? <a href="/login">Login</a></p>
+</section>
+{% endblock %}

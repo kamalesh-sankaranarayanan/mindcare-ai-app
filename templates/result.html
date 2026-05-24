@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card result-card">
+    <h1>Assessment Result</h1>
+    <p class="sub">Hi {{ name }}, your wellness screening result is:</p>
+
+    <div class="score-circle">
+        <span>{{ score }}</span>
+        <small>/ 48</small>
+    </div>
+
+    <h2 class="level {{ level|lower }}">Level: {{ level }}</h2>
+
+    {% if level == "High" %}
+    <p class="danger">
+        Your score indicates significant emotional distress.
+        Please consider speaking with a qualified mental-health professional.
+        If you feel unsafe, contact emergency services immediately.
+    </p>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h1>Activities Recommended For {{ level }} Level</h1>
+    <div class="activity-grid">
+        {% for item in activities %}
+        <div class="activity-card">
+            <div class="activity-icon">{{ item.icon }}</div>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.desc }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="btn-row">
+        <a class="btn" href="/relax/{{ level }}">Open Relaxation Hub</a>
+        <a class="btn" href="/dashboard">View Dashboard</a>
+        <a class="btn secondary-btn" href="/assessment">Retake Test</a>
+    </div>
+</section>
+{% endblock %}

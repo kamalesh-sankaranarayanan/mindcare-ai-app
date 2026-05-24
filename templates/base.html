@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MindCare AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">MindCare AI</div>
+    <div class="nav-links">
+        {% if session.get("user") %}
+            <a href="/assessment">Assessment</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+{% if session.get("user") %}
+<div class="chat-widget">
+    <button onclick="toggleDarkMode()">
+    🌙
+</button>
+    <button class="chat-fab" onclick="toggleChat()">🤖</button>
+    <div id="chatBox" class="chat-box">
+        <h3>MindCare Chat</h3>
+        <div id="chatMessages"></div>
+        <div class="chat-input-row">
+            <input type="text" id="chatInput" placeholder="Tell me how you feel...">
+            <button onclick="sendChat()">Send</button>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endif %}
+<script>
+
+function toggleDarkMode(){
+
+    document.body.classList.toggle("dark-mode");
+}
+
+</script>
+</body>
+</html>

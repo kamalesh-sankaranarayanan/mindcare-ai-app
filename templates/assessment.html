@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+    <h1>Hello, {{ name }}</h1>
+   
+    <p class="warning">
+        This app does not provide medical diagnosis.
+        Information shared is used only for wellness support.
+    </p>
+
+    <div class="progress-wrap">
+        <div id="progressText">Question 1 of {{ questions|length }}</div>
+        <div class="progress-bar">
+            <div id="progressFill"></div>
+        </div>
+    </div>
+
+    <form action="/submit" method="POST" id="assessmentForm">
+        {% for q in questions %}
+        <div class="question-page {% if loop.index == 1 %}active{% endif %}">
+            <h2>{{ loop.index }}. {{ q }}</h2>
+
+            <div class="option-grid">
+                <label><input type="radio" name="q{{ loop.index }}" value="0" required> <span>Not at all</span></label>
+                <label><input type="radio" name="q{{ loop.index }}" value="1"> <span>Several days</span></label>
+                <label><input type="radio" name="q{{ loop.index }}" value="2"> <span>More than half the days</span></label>
+                <label><input type="radio" name="q{{ loop.index }}" value="3"> <span>Nearly every day</span></label>
+            </div>
+
+            <div class="question-actions">
+                <button type="button" class="secondary-btn" onclick="prevQuestion()">Back</button>
+                {% if loop.index < questions|length %}
+                    <button type="button" onclick="nextQuestion()">Next</button>
+                {% else %}
+                    <button type="submit">Submit Assessment</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </form>
+</section>
+
+<script>
+const totalQuestions = {{ questions|length }};
+</script>
+<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
+{% endblock %}
