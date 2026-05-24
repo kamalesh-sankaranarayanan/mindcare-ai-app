@@ -4,3 +4,4 @@ python-dotenv==1.0.1
 gunicorn
 openai
 requests
+google-generativeai
