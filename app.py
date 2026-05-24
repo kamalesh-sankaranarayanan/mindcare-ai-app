@@ -6,7 +6,29 @@ import firebase_admin
 from firebase_admin import credentials, db
 import google.generativeai as genai
 import os
+import firebase_admin
+from firebase_admin import credentials, db
+import os, json
 
+firebase_app = None
+
+if not firebase_admin._apps:
+
+    firebase_env = os.getenv("FIREBASE_CONFIG")
+
+    if not firebase_env:
+        raise Exception("FIREBASE_CONFIG missing in Render environment variables")
+
+    try:
+        firebase_config = json.loads(firebase_env)
+    except Exception as e:
+        raise Exception(f"Invalid FIREBASE_CONFIG JSON: {str(e)}")
+
+    cred = credentials.Certificate(firebase_config)
+
+    firebase_app = firebase_admin.initialize_app(cred, {
+        "databaseURL": os.getenv("FIREBASE_DATABASE_URL")
+    })
 # ---------------- LOAD ENV ----------------
 load_dotenv()
 
