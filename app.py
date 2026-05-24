@@ -27,12 +27,21 @@ app.secret_key = os.environ.get(
 
 # ---------------- FIREBASE ----------------
 if not firebase_admin._apps:
-    cred = credentials.Certificate(
-        "serviceAccountKey.json"
-    )
+    
+
+    firebase_config = {
+    "type": os.getenv("FIREBASE_TYPE"),
+    "project_id": os.getenv("FIREBASE_PROJECT_ID"),
+    "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n"),
+    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+    "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+}
+
+    cred = credentials.Certificate(firebase_config)
 
     firebase_admin.initialize_app(cred, {
-        "databaseURL": "https://depression-screening-4e748-default-rtdb.asia-southeast1.firebasedatabase.app"
+        "databaseURL": "YOUR_FIREBASE_DATABASE_URL"
     })
 
 # ---------------- QUESTIONS ----------------
