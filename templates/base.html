@@ -2,54 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MindCare AI</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071a1d">
+    <title>{% block title %}MindCare{% endblock %} · Your daily mind space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
 </head>
 <body>
+<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
 <nav class="navbar">
-    <div class="logo">MindCare AI</div>
+    <a class="logo" href="{{ url_for('dashboard') if session.get('user') else url_for('login') }}">
+        <span class="logo-mark">M</span><span>mindcare</span>
+    </a>
+    <button class="nav-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
     <div class="nav-links">
         {% if session.get("user") %}
-            <a href="/assessment">Assessment</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/logout">Logout</a>
+            <a href="/dashboard">Overview</a>
+            <a href="/hub">Mind Lab</a>
+            <a href="/assessment">Check-in</a>
+            <button class="icon-button" id="themeToggle" aria-label="Change theme">◐</button>
+            <a class="nav-avatar" href="/logout" title="Log out">{{ session.get("user", {}).get("name", "U")[0] }}</a>
         {% else %}
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
+            <a href="/login">Sign in</a>
+            <a class="nav-cta" href="/register">Get started</a>
         {% endif %}
     </div>
 </nav>
-
-<main>
-    {% block content %}{% endblock %}
-</main>
+<main>{% block content %}{% endblock %}</main>
 
 {% if session.get("user") %}
 <div class="chat-widget">
-    <button onclick="toggleDarkMode()">
-    🌙
-</button>
-    <button class="chat-fab" onclick="toggleChat()">🤖</button>
     <div id="chatBox" class="chat-box">
-        <h3>MindCare Chat</h3>
-        <div id="chatMessages"></div>
-        <div class="chat-input-row">
-            <input type="text" id="chatInput" placeholder="Tell me how you feel...">
-            <button onclick="sendChat()">Send</button>
-        </div>
+        <div class="chat-head"><div><small>MINDFUL COMPANION</small><h3>Talk it through</h3></div><button class="icon-button" onclick="toggleChat()">×</button></div>
+        <div id="chatMessages"><div class="message bot-message"><div class="bubble bot-bubble">Hi. I’m here to listen and help you find one small next step.</div></div></div>
+        <div class="chat-input-row"><input type="text" id="chatInput" maxlength="600" placeholder="What's on your mind?"><button onclick="sendChat()" aria-label="Send">↑</button></div>
+        <small class="chat-note">AI support, not medical care.</small>
     </div>
+    <button class="chat-fab" onclick="toggleChat()" aria-label="Open mindful companion">✦</button>
 </div>
 <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 {% endif %}
-<script>
-
-function toggleDarkMode(){
-
-    document.body.classList.toggle("dark-mode");
-}
-
-</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

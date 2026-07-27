@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}Mind Lab{% endblock %}
+{% block content %}
+<header class="lab-hero"><span class="eyebrow">INTERACTIVE WELLNESS</span><h1>Welcome to the Mind Lab.</h1><p>Short, science-inspired activities to help you focus, reset, and reconnect. Pick what your mind needs right now.</p></header>
+<div class="filter-row"><button class="active" data-filter="all">All activities</button><button data-filter="focus">Focus</button><button data-filter="calm">Calm</button><button data-filter="ground">Ground</button></div>
+<section class="lab-grid">
+  <a class="lab-card featured" data-type="focus" href="/focus-flow"><div class="lab-visual constellation">✦<i></i><i></i><i></i></div><div><span class="tag">FOCUS · 3 MIN</span><h2>Focus Flow</h2><p>Follow the light, build a calm rhythm, and strengthen sustained attention.</p><b>Enter flow →</b></div></a>
+  <a class="lab-card" data-type="calm" href="/reaction-game"><div class="lab-visual pulse-visual">◎</div><div><span class="tag">RESET · 2 MIN</span><h2>Reaction Reset</h2><p>Slow down first. Respond only when the moment is right.</p><b>Play →</b></div></a>
+  <a class="lab-card" data-type="ground" href="/grounding-game"><div class="lab-visual horizon">⌁</div><div><span class="tag">GROUND · 5 MIN</span><h2>Grounding Quest</h2><p>A guided 5-4-3-2-1 sensory journey back to the present.</p><b>Begin quest →</b></div></a>
+  <a class="lab-card" data-type="focus" href="/memory-game"><div class="lab-visual tiles">◇ ◇<br>◇ ◇</div><div><span class="tag">MEMORY · 4 MIN</span><h2>Memory Garden</h2><p>Match calming symbols with fewer moves.</p><b>Play →</b></div></a>
+  <a class="lab-card" data-type="calm" href="/breathing"><div class="lab-visual pulse-visual">○</div><div><span class="tag">BREATHE · 2 MIN</span><h2>Breathing Space</h2><p>Use a guided visual rhythm to settle your body.</p><b>Breathe →</b></div></a>
+  <a class="lab-card" data-type="ground" href="/journal"><div class="lab-visual journal-visual">≋</div><div><span class="tag">REFLECT · 5 MIN</span><h2>Private Journal</h2><p>Guided prompts with entries saved to your personal space.</p><b>Write →</b></div></a>
+</section>
+{% endblock %}
+{% block scripts %}<script>document.querySelectorAll(".filter-row button").forEach(b=>b.onclick=()=>{document.querySelector(".filter-row .active").classList.remove("active");b.classList.add("active");document.querySelectorAll(".lab-card").forEach(c=>c.hidden=b.dataset.filter!=="all"&&c.dataset.type!==b.dataset.filter)})</script>{% endblock %}

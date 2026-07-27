@@ -8,6 +8,12 @@ function toggleChat() {
     }
 }
 
+function escapeChatText(value) {
+    const node = document.createElement("div");
+    node.textContent = value;
+    return node.innerHTML;
+}
+
 async function sendChat() {
     const input = document.getElementById("chatInput");
     const messages = document.getElementById("chatMessages");
@@ -20,7 +26,7 @@ async function sendChat() {
     messages.innerHTML += `
         <div class="message user-message">
             <div class="bubble user-bubble">
-                ${text}
+                ${escapeChatText(text)}
             </div>
         </div>
     `;
@@ -63,7 +69,7 @@ async function sendChat() {
         messages.innerHTML += `
             <div class="message bot-message">
                 <div class="bubble bot-bubble">
-                    ${data.reply}
+                    ${escapeChatText(data.reply)}
                 </div>
             </div>
         `;

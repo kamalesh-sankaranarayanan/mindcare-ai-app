@@ -1,48 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-
-<style>
-
-body{
-    font-family:Arial;
-    background:#f8fafc;
-    padding:40px;
-}
-
-textarea{
-    width:100%;
-    height:300px;
-    padding:20px;
-    border-radius:10px;
-}
-
-button{
-    margin-top:20px;
-    padding:12px 25px;
-    background:#14b8a6;
-    color:white;
-    border:none;
-    border-radius:10px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h1>📝 Journal</h1>
-
-<form>
-
-<textarea placeholder="Write your thoughts..."></textarea>
-
-<br>
-
-<button>Save Journal</button>
-
-</form>
-
-</body>
-</html>
+{% extends "base.html" %}{% block title %}Private Journal{% endblock %}
+{% block content %}<section class="journal-shell"><a class="back-link" href="/hub">← Mind Lab</a><span class="eyebrow">PRIVATE REFLECTION</span><h1>Clear some headspace.</h1><div class="prompt-card"><small>TODAY'S PROMPT</small><p id="journalPrompt">What is taking up the most space in your mind right now?</p><button id="newPrompt">Try another prompt ↻</button></div><textarea id="journalContent" maxlength="3000" placeholder="Write freely. This is your space…"></textarea><div class="journal-actions"><small><span id="wordCount">0</span> words · Saved only to your account</small><button class="btn btn-primary" id="saveJournal">Save reflection</button></div><p id="journalStatus" class="form-status"></p><div id="pastEntries" class="past-entries"></div></section>{% endblock %}
+{% block scripts %}<script>
+const prompts=["What is taking up the most space in your mind right now?","What is one thing you handled well today?","What would you say to a friend feeling exactly as you do?","Name three small things that felt okay today.","What can you let go of for the next hour?"];let pi=0;
+const content=document.getElementById("journalContent"),status=document.getElementById("journalStatus");
+document.getElementById("newPrompt").onclick=()=>{pi=(pi+1)%prompts.length;document.getElementById("journalPrompt").textContent=prompts[pi]};
+content.oninput=()=>document.getElementById("wordCount").textContent=content.value.trim()?content.value.trim().split(/\s+/).length:0;
+document.getElementById("saveJournal").onclick=async()=>{const r=await fetch("/api/journal",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:content.value,prompt:prompts[pi]})});const d=await r.json();status.textContent=d.message;if(r.ok){content.value="";content.oninput();loadEntries()}};
+async function loadEntries(){const entries=await fetch("/api/journal").then(r=>r.json());document.getElementById("pastEntries").innerHTML=entries.length?`<h2>Recent reflections</h2>${entries.map(e=>`<article><small>${e.created_at.slice(0,10)}</small><p>${escapeHtml(e.content)}</p></article>`).join("")}`:""}
+function escapeHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}loadEntries();
+</script>{% endblock %}

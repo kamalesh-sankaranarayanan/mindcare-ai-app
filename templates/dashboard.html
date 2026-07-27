@@ -1,72 +1,62 @@
 {% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
 {% block content %}
+<header class="dashboard-hero">
+    <div>
+        <span class="eyebrow">YOUR PERSONAL SPACE</span>
+        <h1>Good to see you, {{ name }}.</h1>
+        <p>Small check-ins become meaningful patterns. Here’s how your mind has been moving.</p>
+    </div>
+    <a class="btn btn-primary" href="/assessment">Start a check-in <span>→</span></a>
+</header>
 
-<div class="card">
-    <h2>🔥 Streak: {{ streak }}</h2>
-    <h2>⭐ XP: {{ xp }}</h2>
+<section class="metric-grid">
+    <article class="metric-card accent-mint"><span class="metric-icon">↗</span><div><small>WELLNESS SCORE</small><strong>{{ latest_score if latest_score is not none else "—" }}<em>{% if latest_score is not none %}/48{% endif %}</em></strong><p>{% if score_change is not none %}{{ score_change|abs }} points {{ "higher" if score_change > 0 else "lower" }} than last time{% else %}Complete two check-ins to see change{% endif %}</p></div></article>
+    <article class="metric-card"><span class="metric-icon">◇</span><div><small>CURRENT STATE</small><strong class="state-text">{{ current_level }}</strong><p>Based on your latest check-in</p></div></article>
+    <article class="metric-card"><span class="metric-icon">🔥</span><div><small>CHECK-IN STREAK</small><strong>{{ streak }}<em> days</em></strong><p>Consistency over perfection</p></div></article>
+    <article class="metric-card"><span class="metric-icon">✦</span><div><small>MINDFUL XP</small><strong>{{ xp }}<em> xp</em></strong><div class="mini-progress"><i style="width:{{ progress }}%"></i></div></div></article>
+</section>
+
+<div class="dashboard-grid">
+    <section class="panel chart-panel">
+        <div class="panel-head"><div><span class="eyebrow">TREND</span><h2>Your wellness path</h2></div><span class="live-pill">● Live insight</span></div>
+        {% if history %}
+        <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
+        {% else %}
+        <div class="empty-state"><span>⌁</span><h3>Your path starts here</h3><p>Complete your first check-in to unlock personal trends.</p><a class="btn" href="/assessment">Begin check-in</a></div>
+        {% endif %}
+    </section>
+    <aside class="panel mood-panel">
+        <span class="eyebrow">RIGHT NOW</span><h2>How are you feeling?</h2><p>No judgment. Just notice.</p>
+        <div class="mood-picker" id="moodPicker">
+            {% for value, icon in [("Great","◉"),("Good","◕"),("Okay","●"),("Low","◔"),("Stressed","◎")] %}
+            <button data-mood="{{ value }}"><span>{{ icon }}</span><small>{{ value }}</small></button>
+            {% endfor %}
+        </div>
+        <textarea id="moodNote" maxlength="500" placeholder="Add a note (optional)"></textarea>
+        <button class="btn btn-primary full" onclick="saveMood()">Log this moment</button>
+        <p id="moodStatus" class="form-status"></p>
+    </aside>
 </div>
 
-<section class="card">
-    <h1>{{ name }}'s Dashboard</h1>
-
-    {% if history %}
-        <canvas id="scoreChart"></canvas>
-
-        <h2>Assessment History</h2>
-        <table>
-            <tr>
-                <th>Date</th>
-                <th>Score</th>
-                <th>Level</th>
-            </tr>
-            {% for item in history %}
-            <tr>
-                <td>{{ item.date }}</td>
-                <td>{{ item.score }}</td>
-                <td>{{ item.level }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No assessment history found.</p>
-    {% endif %}
+<section class="section-head"><div><span class="eyebrow">RECOMMENDED FOR YOU</span><h2>Take a mindful minute</h2></div><a href="/hub">Explore Mind Lab →</a></section>
+<section class="quick-grid">
+    <a class="quick-card q-breathe" href="/breathing"><span class="quick-art">○</span><small>2 MIN</small><h3>Box breathing</h3><p>Reset your nervous system</p><b>Begin →</b></a>
+    <a class="quick-card q-focus" href="/focus-flow"><span class="quick-art">✦</span><small>3 MIN</small><h3>Focus flow</h3><p>Train calm attention</p><b>Play →</b></a>
+    <a class="quick-card q-ground" href="/grounding-game"><span class="quick-art">⌁</span><small>5 MIN</small><h3>Grounding quest</h3><p>Reconnect with your senses</p><b>Start →</b></a>
 </section>
 
-<section class="card">
-    <h1>Mood Journal</h1>
-    <select id="mood">
-        <option value="Happy">Happy</option>
-        <option value="Calm">Calm</option>
-        <option value="Sad">Sad</option>
-        <option value="Stressed">Stressed</option>
-        <option value="Anxious">Anxious</option>
-    </select>
-    <textarea id="moodNote" placeholder="Write a short note about your mood..."></textarea>
-    <button onclick="saveMood()">Save Mood</button>
-    <p id="moodStatus"></p>
-</section>
-
+{% if game_sessions %}
+<section class="panel recent-panel"><div class="panel-head"><div><span class="eyebrow">RECENT ACTIVITY</span><h2>Your Mind Lab sessions</h2></div><a href="/hub">Play again →</a></div>
+<div class="session-list">{% for item in game_sessions %}<div><span class="session-orb">✦</span><b>{{ item.game }}</b><small>{{ item.date[:10] }}</small><strong>{{ item.score }} pts</strong></div>{% endfor %}</div></section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
 <script>
 const historyData = {{ history | tojson }};
-if (historyData.length > 0) {
-    new Chart(document.getElementById("scoreChart"), {
-        type: "line",
-        data: {
-            labels: historyData.map(x => x.date),
-            datasets: [{
-                label: "Screening Score",
-                data: historyData.map(x => x.score),
-                borderWidth: 2,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true, max: 48 }
-            }
-        }
-    });
+if (historyData.length) {
+  new Chart(document.getElementById("scoreChart"), {type:"line",data:{labels:historyData.map(x=>x.date.slice(5,10)),datasets:[{data:historyData.map(x=>x.score),borderColor:"#70e1c1",backgroundColor:"rgba(112,225,193,.1)",fill:true,tension:.42,pointRadius:4,pointBackgroundColor:"#70e1c1",borderWidth:3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:"#80979a"}},y:{beginAtZero:true,max:48,grid:{color:"rgba(128,151,154,.12)"},ticks:{color:"#80979a"}}}}});
 }
 </script>
 <script src="{{ url_for('static', filename='js/mood.js') }}"></script>

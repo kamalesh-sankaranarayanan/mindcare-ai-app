@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-from datetime import datetime
+from datetime import datetime, timezone
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -16,6 +17,11 @@ load_dotenv()
 # ---------------- FLASK APP ----------------
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-key")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("FLASK_ENV") == "production",
+)
 
 # ---------------- OPENROUTER AI ----------------
 client = OpenAI(
@@ -36,18 +42,22 @@ def init_firebase():
     firebase_env = os.getenv("FIREBASE_CONFIG")
     db_url = os.getenv("FIREBASE_DATABASE_URL")
 
-    if not firebase_env:
-        raise Exception("FIREBASE_CONFIG missing in Render environment variables")
-
     if not db_url:
-        raise Exception("FIREBASE_DATABASE_URL missing in Render environment variables")
+        raise RuntimeError("FIREBASE_DATABASE_URL is required.")
 
-    try:
-        firebase_config = json.loads(firebase_env)
-    except Exception as e:
-        raise Exception(f"Invalid FIREBASE_CONFIG JSON: {str(e)}")
-
-    cred = credentials.Certificate(firebase_config)
+    if firebase_env:
+        try:
+            firebase_config = json.loads(firebase_env)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(f"Invalid FIREBASE_CONFIG JSON: {error}") from error
+        cred = credentials.Certificate(firebase_config)
+    else:
+        local_key = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+        if not os.path.exists(local_key):
+            raise RuntimeError(
+                "Set FIREBASE_CONFIG on Render or add serviceAccountKey.json locally."
+            )
+        cred = credentials.Certificate(local_key)
 
     firebase_app = firebase_admin.initialize_app(cred, {
         "databaseURL": db_url
@@ -86,6 +96,17 @@ def clean_email_key(email):
 
 def current_user():
     return session.get("user")
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user():
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+def timestamp():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def get_level(score):
@@ -537,6 +558,10 @@ def home():
         return redirect(url_for("assessment"))
     return redirect(url_for("login"))
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "healthy", "service": "mindcare"}), 200
+
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
@@ -736,10 +761,8 @@ def submit():
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
+@login_required
 def dashboard():
-
-    if not current_user():
-        return redirect(url_for("login"))
 
     user = current_user()
 
@@ -753,6 +776,8 @@ def dashboard():
 
     streak = user_data.get("streak", 0)
     xp = user_data.get("xp", 0)
+    moods_data = user_data.get("moods", {}) or {}
+    games_data = user_data.get("game_sessions", {}) or {}
 
     history = []
 
@@ -769,13 +794,41 @@ def dashboard():
         history,
         key=lambda x: x["date"]
     )
+    moods = sorted([
+        {
+            "mood": item.get("mood", "Unknown"),
+            "note": item.get("note", ""),
+            "date": item.get("created_at", "")
+        }
+        for item in moods_data.values()
+    ], key=lambda x: x["date"])
+    game_sessions = sorted([
+        {
+            "game": item.get("game", "Game"),
+            "score": item.get("score", 0),
+            "date": item.get("created_at", "")
+        }
+        for item in games_data.values()
+    ], key=lambda x: x["date"], reverse=True)[:5]
+
+    latest_score = history[-1]["score"] if history else None
+    previous_score = history[-2]["score"] if len(history) > 1 else None
+    score_change = latest_score - previous_score if previous_score is not None else None
+    level = history[-1]["level"] if history else "Not assessed"
 
     return render_template(
         "dashboard.html",
         name=user["name"],
         history=history,
         streak=streak,
-        xp=xp
+        xp=xp,
+        moods=moods[-10:],
+        recent_moods=list(reversed(moods[-4:])),
+        game_sessions=game_sessions,
+        latest_score=latest_score,
+        score_change=score_change,
+        current_level=level,
+        progress=min(xp % 100, 100)
     )
 
 
@@ -807,6 +860,7 @@ def relax(level):
 
 # ---------------- SAVE MOOD ----------------
 @app.route("/save_mood", methods=["POST"])
+@login_required
 def save_mood():
 
     if not current_user():
@@ -814,14 +868,16 @@ def save_mood():
             "message": "Please login first."
         }), 401
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    allowed_moods = {"Great", "Good", "Okay", "Low", "Stressed"}
+    mood = data.get("mood")
+    if mood not in allowed_moods:
+        return jsonify({"message": "Please choose a valid mood."}), 400
 
     mood_data = {
-        "mood": data.get("mood"),
-        "note": data.get("note", ""),
-        "created_at": datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        "mood": mood,
+        "note": str(data.get("note", ""))[:500],
+        "created_at": timestamp()
     }
 
     db.reference(
@@ -832,41 +888,112 @@ def save_mood():
         "message": "Mood saved successfully."
     })
 
+@app.route("/hub")
+@login_required
+def hub():
+    return render_template("hub.html")
+
+@app.route("/focus-flow")
+@login_required
+def focus_flow():
+    return render_template("focus_flow.html")
+
+@app.route("/reaction-game")
+@login_required
+def reaction_game():
+    return render_template("reaction_game.html")
+
+@app.route("/grounding-game")
+@login_required
+def grounding_game():
+    return render_template("grounding_game.html")
+
+@app.route("/api/game-session", methods=["POST"])
+@login_required
+def save_game_session():
+    data = request.get_json(silent=True) or {}
+    allowed_games = {"Memory Match", "Focus Flow", "Reaction Reset", "Grounding Quest"}
+    game = data.get("game")
+    try:
+        score = max(0, min(int(data.get("score", 0)), 100000))
+    except (TypeError, ValueError):
+        return jsonify({"message": "Invalid score."}), 400
+    if game not in allowed_games:
+        return jsonify({"message": "Unknown game."}), 400
+
+    db.reference(f"users/{current_user()['key']}/game_sessions").push({
+        "game": game,
+        "score": score,
+        "created_at": timestamp()
+    })
+    user_ref = db.reference(f"users/{current_user()['key']}")
+    user_data = user_ref.get() or {}
+    reward = min(25, 5 + score // 100)
+    user_ref.update({"xp": int(user_data.get("xp", 0)) + reward})
+    return jsonify({"message": "Session saved", "xp_earned": reward})
+
+@app.route("/api/journal", methods=["GET", "POST"])
+@login_required
+def journal_api():
+    ref = db.reference(f"users/{current_user()['key']}/journals")
+    if request.method == "GET":
+        entries = ref.get() or {}
+        result = sorted(entries.values(), key=lambda x: x.get("created_at", ""), reverse=True)
+        return jsonify(result[:10])
+    data = request.get_json(silent=True) or {}
+    content = str(data.get("content", "")).strip()
+    if not content:
+        return jsonify({"message": "Write something before saving."}), 400
+    ref.push({
+        "content": content[:3000],
+        "prompt": str(data.get("prompt", ""))[:300],
+        "created_at": timestamp()
+    })
+    return jsonify({"message": "Reflection saved privately."})
+
 @app.route("/meditation")
+@login_required
 def meditation():
     return render_template("meditation.html")
 
 
 @app.route("/breathing")
+@login_required
 def breathing():
     return render_template("breathing.html")
 
 
 @app.route("/journal")
+@login_required
 def journal():
     return render_template("journal.html")
 
 
 @app.route("/memory-game")
+@login_required
 def memory_game():
     return render_template("memory_game.html")
 
 @app.route("/music")
+@login_required
 def music():
     return render_template("music.html")
 
 
 @app.route("/stress-game")
+@login_required
 def stress_game():
     return render_template("stress_game.html")
 
 
 @app.route("/funny-video")
+@login_required
 def funny_video():
     return render_template("funny_video.html")
 
 # ---------------- CHATBOT ----------------
 @app.route("/chat", methods=["POST"])
+@login_required
 def chat():
 
     user_message = request.json.get(
@@ -936,4 +1063,4 @@ def chat():
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    app.run(debug=True) 
+    app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
